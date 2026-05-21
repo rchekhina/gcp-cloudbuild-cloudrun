@@ -14,7 +14,7 @@ steps:
       'us-central1-docker.pkg.dev/$PROJECT_ID/repo-$_ENTORNO/mi-app:$SHORT_SHA'
     ]
 
-  # 3. Desplegar en Cloud Run inyectando una variable de entorno interna
+  # 3. Desplegar en Cloud Run inyectando la variable de entorno
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: 'gcloud'
     args:
@@ -24,7 +24,19 @@ steps:
       - '--image=us-central1-docker.pkg.dev/$PROJECT_ID/repo-$_ENTORNO/mi-app:$SHORT_SHA'
       - '--region=us-central1'
       - '--set-env-vars=ENTORNO_NAME=$_ENTORNO'
-      - '--allow-unauthenticated'
+      # Quitamos la bandera conflictiva de aquí para manejarla en el paso de abajo
+
+  # 4. Hacer el servicio público para el entorno de Desarrollo automáticamente
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'gcloud'
+    args:
+      - 'run'
+      - 'services'
+      - 'add-iam-policy-binding'
+      - 'mi-app-$_ENTORNO'
+      - '--region=us-central1'
+      - '--member=allUsers'
+      - '--role=roles/run.invoker'
 
 substitutions:
   _ENTORNO: 'dev'
